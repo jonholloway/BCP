@@ -7,8 +7,8 @@
 //
 
 #import "MasterViewController.h"
-
-#import "DetailViewController.h"
+#import "ReaderViewController.h"
+#import "Store.h"
 
 @interface MasterViewController () {
     NSMutableArray *_objects;
@@ -35,6 +35,14 @@
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
     self.navigationItem.rightBarButtonItem = addButton;
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
+    
+    if (!_objects) {
+        _objects = [[NSMutableArray alloc] init];
+    }
+    [_objects addObject:@"atropine"];
+    [_objects addObject:@"ampicillin"];
+    [_objects addObject:@"adrenaline"];
+
 }
 
 - (void)didReceiveMemoryWarning
@@ -107,10 +115,22 @@
 */
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
+{   // check if ipad or iphone
+    
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        NSDate *object = _objects[indexPath.row];
-        self.detailViewController.detailItem = object;
+        //NSDate *object = _objects[indexPath.row];
+        //self.detailViewController.detailItem = object;
+        NSString *pdfFileName = _objects[indexPath.row];
+        [Store moveFiles:pdfFileName];
+        [self showPDF:pdfFileName];
+        }
+    else {
+        NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+        //NSDate *object = _objects[indexPath.row];
+        //[[segue destinationViewController] setDetailItem:object];
+        NSString *pdfFileName = _objects[indexPath.row];
+        [Store moveFiles:pdfFileName];
+        [self showPDF:pdfFileName];
     }
 }
 
@@ -118,9 +138,63 @@
 {
     if ([[segue identifier] isEqualToString:@"showDetail"]) {
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
-        NSDate *object = _objects[indexPath.row];
-        [[segue destinationViewController] setDetailItem:object];
+        //NSDate *object = _objects[indexPath.row];
+        //[[segue destinationViewController] setDetailItem:object];
+       NSString *pdfFileName = _objects[indexPath.row];
+    [Store moveFiles:pdfFileName];
+    [self showPDF:pdfFileName];
+}
+    
+     
+}
+
+
+- (IBAction)PushThisOne:(id)sender {
+    [self showPDF:@"BLoodsafe Executive Summary"];
+
+}
+
+-(void)showPDF: (NSString *)pdfFileName  {
+    NSString *phrase = nil; // Document password (for unlocking most encrypted PDF files)
+	NSString *filePath = pdfFileName;
+    ReaderDocument *document = [ReaderDocument withDocumentFilePath:filePath password:phrase];
+    
+	if (document != nil) // Must have a valid ReaderDocument object in order to proceed with things
+	{
+		ReaderViewController *readerViewController = [[ReaderViewController alloc] initWithReaderDocument:document];
+        
+		readerViewController.delegate = self; // Set the ReaderViewController delegate to self
+        
+#if (DEMO_VIEW_CONTROLLER_PUSH == TRUE)
+        
+		[self.navigationController pushViewController:readerViewController animated:YES];
+        
+#else // present in a modal view controller
+        
+		readerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+		readerViewController.modalPresentationStyle = UIModalPresentationFullScreen;
+        
+        [self presentModalViewController:readerViewController animated:YES];
+        
+        
+#endif // DEMO_VIEW_CONTROLLER_PUSH
     }
+    
+}
+- (void)dismissReaderViewController:(ReaderViewController *)viewController
+{
+#if (DEMO_VIEW_CONTROLLER_PUSH == TRUE)
+    
+	[self.navigationController popViewControllerAnimated:YES];
+    
+#else // dismiss the modal view controller
+    
+	[self dismissModalViewControllerAnimated:YES];
+    
+    
+#endif // DEMO_VIEW_CONTROLLER_PUSH
+    
+    
 }
 
 @end

@@ -124,7 +124,7 @@ static Store *sharedStore = nil;
     BOOL *answer = YES;
     
     if (results.count < 1) {
-        //File Not found in update list - cntinue
+        //File Not found in update list - continue
     }
     else
     {
